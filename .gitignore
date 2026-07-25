@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Claude Code local tool state — not project source.
+.claude/
+
+# Recorded WAV output — user data, not source.
+recordings/*
+!recordings/.gitkeep
