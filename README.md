@@ -116,6 +116,8 @@ files are named profiles for specific bands/devices/modes, e.g.:
 
 - `config/rtl_126_3_am.toml` — RTL-SDR, 126.3 MHz, AM (aviation band)
 - `config/rtl_155_1_fm.toml` — RTL-SDR, 155.1 MHz, FM
+- `config/hackrf_126_3_am.toml` — HackRF, 126.3 MHz, AM (aviation band)
+- `config/hackrf_155_1_fm.toml` — HackRF, 155.1 MHz, FM
 
 Both `[radio.hackrf]` and `[radio.rtlsdr]` sections may be present in the
 same file; only the one matching `[sdr].type` is actually used, so switching

@@ -118,6 +118,8 @@ sdr-monitor-config --config config/app_config.toml
 
 - `config/rtl_126_3_am.toml` — RTL-SDR, 126.3 МГц, AM (авиадиапазон)
 - `config/rtl_155_1_fm.toml` — RTL-SDR, 155.1 МГц, FM
+- `config/hackrf_126_3_am.toml` — HackRF, 126.3 МГц, AM (авиадиапазон)
+- `config/hackrf_155_1_fm.toml` — HackRF, 155.1 МГц, FM
 
 Секции `[radio.hackrf]` и `[radio.rtlsdr]` могут присутствовать в одном
 файле одновременно — реально используется только та, что совпадает с

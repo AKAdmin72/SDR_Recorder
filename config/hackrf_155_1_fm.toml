@@ -1,0 +1,134 @@
+# Именованный профиль: HackRF, 155.1 МГц, FM.
+# Запуск: python -m sdr_monitor.app --config config/hackrf_155_1_fm.toml
+# Все параметры радиотракта и захвата задаются здесь, никаких магических чисел в коде быть не должно.
+
+[sdr]
+# Какой физический приёмник использовать: "hackrf" или "rtlsdr". Определяет,
+# какая из секций [radio.*] ниже парсится и валидируется — вторая секция,
+# если присутствует, просто не используется, её не нужно удалять/комментировать
+# при переключении.
+type = "hackrf"
+
+[radio.hackrf]
+# Центральная частота приёма, Гц. 155.1 МГц взята буквально (без отступа) —
+# та же частота настройки уже использовалась в этом же проекте как прямая
+# точка приёма (см. profile rtl_155_1_fm.toml), а не как цель вещания,
+# требующая отстройки от DC-notch. Если реально нужно слушать конкретный
+# сигнал рядом с 155.1, а не саму эту частоту — сдвиньте center_frequency_hz
+# на 100-300 кГц в сторону, как сделано в profile hackrf_126_3_am.toml.
+center_frequency_hz = 155_100_000
+
+
+# Частота дискретизации HackRF, Гц. Для HackRF One допустимый диапазон
+# 2_000_000-20_000_000. 2.0 МГц взята той же, что и у RTL-SDR профилей —
+# обязательное условие: делится нацело на channel_intermediate_sample_rate_hz
+# из [audio] (80 кГц).
+sample_rate_hz = 2_000_000
+
+# Усиление LNA (каскад ПЧ), дБ. Допустимые значения: 0-40 с шагом 8
+# (0,8,16,24,32,40). 24 дБ — безопасное стартовое значение (см. историю в
+# app_config.toml: максимум по всем трём ручкам разом давал шквал ложных
+# срабатываний на паразитной наводке).
+lna_gain_db = 24
+
+# Усиление VGA (каскад НЧ/baseband), дБ. Допустимые значения: 0-62 с шагом 2.
+vga_gain_db = 40
+
+# Встроенный RF-усилитель (+14 дБ фиксированно). Включать только при слабом
+# сигнале антенны — начинать стоит с lna/vga, чтобы не повторить прошлый
+# шквал ложных срабатываний от одновременного максимума по всем трём ручкам.
+amp_enable = false
+
+# Время после старта приёма (hackrf_start_rx), в течение которого IQ читается,
+# но полностью отбрасывается перед FFT/шумовым полом/детекцией — переходный
+# процесс устаканивания PLL/AGC/DC-сервуса. Без этой паузы шумовой пол
+# обучается на "грязных" данных.
+settle_time_s = 5.0
+
+[radio.rtlsdr]
+# Неактивная секция (sdr.type = "hackrf") — оставлена на случай переключения
+# железа без пересборки файла. Значения не подобраны под этот профиль.
+center_frequency_hz = 155_100_000
+
+
+sample_rate_hz = 2_000_000
+gain_db = 40.2
+agc_enabled = false
+freq_correction_ppm = 0
+settle_time_s = 2.0
+read_async_buffer_count = 15
+read_async_buffer_length = 262_144
+
+[fft]
+fft_size = 2048
+window_type = "hann"
+averaging_count = 8
+dc_notch_bins = 2
+
+[noise_floor]
+window_seconds = 10.0
+update_interval_s = 1.0
+percentile = 10.0
+warmup_seconds = 3.0
+
+[detection]
+open_threshold_db = 10.0
+close_threshold_db = 6.0
+min_bandwidth_bins = 3
+open_confirm_frames = 3
+close_confirm_frames = 15
+frequency_match_tolerance_hz = 3000.0
+
+# Пока пусто — специфичных для этого профиля паразитных диапазонов ещё не
+# выявлено. Добавляются через GUI-редактор конфига (кнопка "Config..." или
+# python -m sdr_monitor.config_editor --config config/hackrf_155_1_fm.toml)
+# по факту наблюдения ложных срабатываний на реальном приёме.
+
+[display]
+refresh_interval_s = 0.5
+queue_pump_interval_s = 0.05
+max_blocks_per_pump_tick = 4
+history_size = 20
+spectrum_y_margin_db = 5.0
+
+[audio]
+channel_half_bandwidth_hz = 8000.0
+channel_intermediate_sample_rate_hz = 80_000
+channel_filter_taps = 127
+
+# Режим демодуляции для этого профиля — FM (квадратурный дискриминатор).
+modulation_type = "fm"
+
+# Паспортная девиация FM-канала, Гц — нормирует выход дискриминатора: полная
+# девиация даёт амплитуду ~1.0. 5000 Гц — стандартная девиация NFM для
+# каналов с шагом 12.5/25 кГц.
+fm_deviation_hz = 5000.0
+
+voice_band_low_hz = 300.0
+voice_band_high_hz = 3400.0
+voice_filter_order = 4
+
+audio_sample_rate_hz = 16_000
+audio_resample_cutoff_hz = 7000.0
+audio_resample_filter_taps = 127
+
+# Неактивно при modulation_type = "fm" — оставлено дефолтным на случай
+# переключения обратно на AM.
+am_pcm_full_scale_input = 0.05
+
+# FM: дискриминатор нормирован так, что полная девиация (fm_deviation_hz)
+# даёт амплитуду ~1.0 — измерено на реальном конвейере (см. основной
+# app_config.toml), пик ~0.99. 1.1 даёт ~10% запаса, чтобы пики громкой
+# речи на полной девиации не клиппировались.
+fm_pcm_full_scale_input = 1.1
+
+recordings_dir = "recordings"
+min_recording_duration_s = 1.0
+post_roll_duration_s = 0.5
+
+[acquisition]
+queue_max_blocks = 64
+stats_log_interval_s = 5.0
+
+[logging]
+level = "INFO"
