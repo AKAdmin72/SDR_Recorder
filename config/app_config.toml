@@ -1,11 +1,17 @@
 # Конфигурация SDR Monitor. Все параметры радиотракта и захвата задаются здесь,
 # никаких магических чисел в коде быть не должно.
+# EN: SDR Monitor configuration. Every radio-path and acquisition parameter is
+# EN: set here — there must be no magic numbers in the code.
 
 [sdr]
 # Какой физический приёмник использовать: "hackrf" или "rtlsdr". Определяет,
 # какая из секций [radio.*] ниже парсится и валидируется — вторая секция,
 # если присутствует, просто не используется, её не нужно удалять/комментировать
 # при переключении.
+# EN: Which physical receiver to use: "hackrf" or "rtlsdr". Determines which
+# EN: [radio.*] section below is parsed and validated — the other section, if
+# EN: present, is simply unused and doesn't need to be deleted/commented out
+# EN: when switching.
 type = "rtlsdr"
 
 [radio.hackrf]
@@ -14,20 +20,34 @@ type = "rtlsdr"
 # (полоса 125.6-127.6 МГц) попадала в полосу анализа, но с отступом +300 кГц
 # от центра — подальше и от DC-notch (Этап 2, ~5 бинов ~5 кГц вокруг центра),
 # и от завала АЧХ baseband-фильтра HackRF у самых краёв полосы.
+# EN: Tuning frequency, Hz. Analysis bandwidth = sample_rate_hz.
+# EN: 126.6 MHz was chosen so that known periodic activity at 126.9 MHz (the
+# EN: 125.6-127.6 MHz band) falls within the analysis band, but offset +300 kHz
+# EN: from center — away from the DC notch (Stage 2, ~5 bins / ~5 kHz around
+# EN: center) and away from the HackRF baseband filter's roll-off near the
+# EN: band edges.
 center_frequency_hz = 123_600_000
 
 
 # Частота дискретизации HackRF, Гц. Для HackRF One допустимый диапазон 2_000_000-20_000_000.
 # Совпадает с шириной анализируемой полосы (2 МГц на Этапе 1).
+# EN: HackRF sample rate, Hz. Valid range for the HackRF One is
+# EN: 2_000_000-20_000_000. Matches the analysis bandwidth (2 MHz in Stage 1).
 sample_rate_hz = 2_000_000
 
 # Усиление LNA (каскад ПЧ), дБ. Допустимые значения: 0-40 с шагом 8 (0,8,16,24,32,40).
 # Пробовали поднять до 40+40+amp вкл. в поисках слабой активности на 126.9 МГц —
 # результат хуже: шквал ложных срабатываний на паразитной наводке ~126.14 МГц,
 # сам целевой сигнал так и не появился. Возвращено к безопасным стартовым значениям.
+# EN: LNA gain (IF stage), dB. Valid values: 0-40 in steps of 8 (0,8,16,24,32,40).
+# EN: Tried raising it to 40+40+amp enabled while chasing weak activity at
+# EN: 126.9 MHz — the result was worse: a flood of false triggers on a
+# EN: spurious pickup around 126.14 MHz, and the actual target signal never
+# EN: appeared. Reverted to safe starting values.
 lna_gain_db = 24
 
 # Усиление VGA (каскад НЧ/baseband), дБ. Допустимые значения: 0-62 с шагом 2.
+# EN: VGA gain (baseband stage), dB. Valid values: 0-62 in steps of 2.
 vga_gain_db = 40
 
 # Встроенный RF-усилитель (+14 дБ фиксированно). Включать только при слабом сигнале антенны.
@@ -35,6 +55,12 @@ vga_gain_db = 40
 # перед смесителем, поэтому не усиливает шумы позднейших каскадов так, как lna/vga.
 # lna_gain_db/vga_gain_db пока не трогаем, чтобы не повторить прошлый шквал ложных
 # срабатываний от одновременного максимума по всем трём ручкам.
+# EN: Built-in RF amplifier (fixed +14 dB). Enable only with a weak antenna
+# EN: signal. This would be the first (lowest-risk) step for raising
+# EN: sensitivity — it sits before the mixer, so unlike lna/vga it doesn't
+# EN: amplify the noise of later stages as much. lna_gain_db/vga_gain_db are
+# EN: left alone for now, to avoid repeating the earlier flood of false
+# EN: triggers from maxing out all three controls at once.
 amp_enable = false
 
 # Время после старта приёма (hackrf_start_rx), в течение которого IQ читается,
@@ -43,6 +69,13 @@ amp_enable = false
 # без этой паузы шумовой пол обучается на "грязных" данных, а детектор в первые
 # секунды ловит ложные передачи с аномально высоким SNR. Подобрано с запасом
 # после наблюдения переходного процесса длиной ~3.2с на реальном приёме.
+# EN: Time after starting reception (hackrf_start_rx) during which IQ is read
+# EN: but entirely discarded before FFT/noise floor/detection. HackRF has a
+# EN: transient at start/retune (PLL, AGC, DC servo settling) — without this
+# EN: pause the noise floor trains on "dirty" data, and the detector catches
+# EN: false transmissions with abnormally high SNR in the first few seconds.
+# EN: Chosen with margin after observing a real transient of ~3.2s on actual
+# EN: hardware.
 settle_time_s = 5.0
 
 [radio.rtlsdr]
@@ -50,6 +83,10 @@ settle_time_s = 5.0
 # стоит отстраивать от него на 100-300 кГц (не ровно на него) — R820T, как и
 # HackRF, даёт паразитный пик LO-leakage ровно на центральной частоте,
 # гасится тем же dc_notch_bins из [fft], уже device-агностичным.
+# EN: Tuning frequency, Hz. To receive a specific signal, tune 100-300 kHz
+# EN: away from it (not exactly on it) — the R820T, like the HackRF, produces
+# EN: a spurious LO-leakage peak right at the center frequency, suppressed by
+# EN: the same dc_notch_bins from [fft], which is device-agnostic.
 center_frequency_hz = 446_600_000
 
 
@@ -60,6 +97,13 @@ center_frequency_hz = 446_600_000
 # должно делить sample_rate_hz нацело (ChannelExtractor), а 2.048 МГц/80 кГц
 # не целое (2.048e6/80e3=25.6) — на этом реально споткнулись при первом
 # прогоне на RTL-SDR.
+# EN: RTL2832U sample rate, Hz. The driver's stable range is roughly
+# EN: 225_001-3_200_000 Hz. Set to the same value as HackRF (2.0 MHz) —
+# EN: not only a standard, hardware-proven value for the RTL2832U, but also a
+# EN: hard requirement: channel_intermediate_sample_rate_hz from [audio]
+# EN: (80 kHz) must divide sample_rate_hz evenly (ChannelExtractor), and
+# EN: 2.048 MHz/80 kHz isn't an integer (2.048e6/80e3=25.6) — this actually
+# EN: tripped us up on the first RTL-SDR run.
 sample_rate_hz = 2_000_000
 
 # Усиление тюнера R820T, дБ. Используется, только если agc_enabled=false.
@@ -68,17 +112,30 @@ sample_rate_hz = 2_000_000
 # реально сообщает устройство (rtlsdr_get_tuner_gains), и логирует разницу.
 # 40.2 дБ — одно из верхних значений по факту обнаруженного на этом железе
 # списка (макс. ~49.6 дБ), проверено на реальном приёме на 126.9 МГц.
+# EN: R820T tuner gain, dB. Used only if agc_enabled=false. Doesn't need to
+# EN: match the exact value a given tuner instance supports — RtlSdrDevice
+# EN: picks the closest one from the list the device actually reports
+# EN: (rtlsdr_get_tuner_gains), and logs the difference. 40.2 dB is near the
+# EN: top of the list observed on this hardware (max ~49.6 dB), verified on
+# EN: real reception at 126.9 MHz.
 gain_db = 40.2
 
 # Автоматическая регулировка усиления тюнера. false — ручной gain_db (как
 # сейчас у HackRF), true — тюнер сам подбирает усиление (rtlsdr_set_tuner_gain
 # не применяется).
+# EN: Automatic tuner gain control. false — manual gain_db (as currently used
+# EN: for HackRF), true — the tuner picks its own gain (rtlsdr_set_tuner_gain
+# EN: is not applied).
 agc_enabled = false
 
 # Коррекция ухода частоты кварца, ppm. У RTL-SDR (в отличие от HackRF с TCXO)
 # точность опорного генератора заметно хуже — типичное расхождение до
 # нескольких десятков ppm. 0 — коррекция не применяется; подбирается по факту
 # сравнения известной частоты сигнала с наблюдаемой.
+# EN: Crystal frequency-drift correction, ppm. Unlike HackRF's TCXO, the
+# EN: RTL-SDR's reference oscillator accuracy is noticeably worse — a typical
+# EN: discrepancy of up to a few tens of ppm. 0 means no correction applied;
+# EN: tune this by comparing a known signal's frequency to the observed one.
 freq_correction_ppm = 0
 
 # Время после старта rtlsdr_read_async, в течение которого IQ читается, но
@@ -86,72 +143,119 @@ freq_correction_ppm = 0
 # HackRF settle_time_s. У RTL-SDR переходный процесс тюнера короче, чем у
 # HackRF (нет отдельного PLL-устаканивания на уровне DSP-конвейера), поэтому
 # запас взят меньше — подлежит уточнению по факту наблюдения на реальном приёме.
+# EN: Time after starting rtlsdr_read_async during which IQ is read but
+# EN: discarded before FFT/noise floor/detection — same purpose as HackRF's
+# EN: settle_time_s. The RTL-SDR tuner's transient is shorter than HackRF's
+# EN: (no separate PLL settling visible at the DSP pipeline level), so a
+# EN: smaller margin was chosen — subject to refinement based on real
+# EN: reception observations.
 settle_time_s = 2.0
 
 # Число буферов rtlsdr_read_async — стандартное значение из экосистемы
 # rtl-sdr тулз (rtl_sdr/rtl_fm).
+# EN: Number of rtlsdr_read_async buffers — the standard value used across
+# EN: the rtl-sdr toolset (rtl_sdr/rtl_fm).
 read_async_buffer_count = 15
 
 # Размер одного буфера rtlsdr_read_async, байт — должен быть кратен 512
 # (требование librtlsdr). Стандартное значение из экосистемы rtl-sdr тулз.
+# EN: Size of one rtlsdr_read_async buffer, bytes — must be a multiple of 512
+# EN: (librtlsdr requirement). Standard value used across the rtl-sdr toolset.
 read_async_buffer_length = 262_144
 
 [fft]
 # Размер FFT (комплексных отсчётов). Должен быть степенью двойки.
 # При sample_rate_hz=2_000_000 даёт разрешение sample_rate_hz/fft_size ~ 977 Гц/бин.
+# EN: FFT size (complex samples). Must be a power of two. At
+# EN: sample_rate_hz=2_000_000 this gives a resolution of
+# EN: sample_rate_hz/fft_size ~ 977 Hz/bin.
 fft_size = 2048
 
 # Оконная функция перед FFT, подавляет утечку спектра сильных сигналов в соседние бины.
 # Допустимые значения: hann, hamming, blackmanharris, rectangular.
+# EN: Window function applied before the FFT, suppresses spectral leakage of
+# EN: strong signals into neighboring bins. Valid values: hann, hamming,
+# EN: blackmanharris, rectangular.
 window_type = "hann"
 
 # Сколько последовательных FFT-окон усредняется (в линейной мощности) в один SpectralFrame.
 # Период выдачи кадра = fft_size * averaging_count / sample_rate_hz (~8.2 мс при 2048*8/2e6).
+# EN: How many consecutive FFT windows are averaged (in linear power) into one
+# EN: SpectralFrame. Frame output period = fft_size * averaging_count /
+# EN: sample_rate_hz (~8.2 ms at 2048*8/2e6).
 averaging_count = 8
 
 # Число бинов по каждую сторону от центрального (плюс сам центральный бин),
 # которые обнуляются перед выдачей кадра. HackRF (прямое преобразование) даёт
 # паразитный пик LO-leakage ровно на центральной частоте — это артефакт
 # приёмника, а не реальный сигнал.
+# EN: Number of bins on each side of the center bin (plus the center bin
+# EN: itself) that get zeroed out before the frame is emitted. HackRF (direct
+# EN: conversion) produces a spurious LO-leakage peak exactly at the center
+# EN: frequency — this is a receiver artifact, not a real signal.
 dc_notch_bins = 2
 
 [noise_floor]
 # Длина скользящего окна для перцентильной оценки шума по каждому бину, секунды.
+# EN: Length of the rolling window used for the per-bin percentile noise
+# EN: estimate, seconds.
 window_seconds = 10.0
 
 # Как часто пересчитывать перцентиль по окну (не на каждый спектральный кадр —
 # шум меняется медленно, частый пересчёт был бы напрасной нагрузкой на CPU).
+# EN: How often to recompute the percentile over the window (not on every
+# EN: spectral frame — noise changes slowly, so recomputing often would be a
+# EN: wasted CPU load).
 update_interval_s = 1.0
 
 # Нижний перцентиль мощности в окне, принимаемый за уровень шума. Работает, пока
 # канал не занят сигналом дольше (100-percentile)% времени окна.
+# EN: Lower power percentile within the window, taken as the noise level.
+# EN: Works as long as the channel isn't occupied by a signal for more than
+# EN: (100-percentile)% of the window's duration.
 percentile = 10.0
 
 # Через сколько секунд накопленной истории выдаётся первая (грубая) оценка,
 # не дожидаясь полного window_seconds.
+# EN: After how many seconds of accumulated history the first (rough) estimate
+# EN: is produced, without waiting for the full window_seconds.
 warmup_seconds = 3.0
 
 [detection]
 # Порог ОТКРЫТИЯ передачи: noise_floor[bin] + open_threshold_db.
+# EN: OPEN threshold for a transmission: noise_floor[bin] + open_threshold_db.
 open_threshold_db = 10.0
 
 # Порог ЗАКРЫТИЯ (ниже открытия — это и есть гистерезис): noise_floor[bin] + close_threshold_db.
+# EN: CLOSE threshold (lower than the open one — this is the hysteresis):
+# EN: noise_floor[bin] + close_threshold_db.
 close_threshold_db = 6.0
 
 # Минимальная ширина связной группы бинов выше порога, чтобы не считать
 # одиночный шумовой выброс сигналом.
+# EN: Minimum width of a contiguous group of bins above the threshold, so a
+# EN: single noise spike isn't counted as a signal.
 min_bandwidth_bins = 3
 
 # Сколько кадров подряд выше open_threshold_db нужно, чтобы подтвердить начало
 # передачи (~24.6 мс при текущих fft_size/averaging_count).
+# EN: How many consecutive frames above open_threshold_db are needed to
+# EN: confirm the start of a transmission (~24.6 ms at the current
+# EN: fft_size/averaging_count).
 open_confirm_frames = 3
 
 # Сколько кадров подряд ниже close_threshold_db (или без совпадения), чтобы
 # подтвердить конец передачи (~123 мс — переживает паузы в голосе AM).
+# EN: How many consecutive frames below close_threshold_db (or with no match)
+# EN: are needed to confirm the end of a transmission (~123 ms — survives
+# EN: pauses in AM voice traffic).
 close_confirm_frames = 15
 
 # Допуск по частоте при сопоставлении кластера с уже существующим треком
 # между кадрами. Меньше половины шага авиаканалов (25 кГц).
+# EN: Frequency tolerance used when matching a cluster to an already-existing
+# EN: track across frames. Less than half the aviation channel spacing
+# EN: (25 kHz).
 frequency_match_tolerance_hz = 3000.0
 
 # Диапазоны частот, полностью исключённые из детекции (бины внутри них не
@@ -159,6 +263,12 @@ frequency_match_tolerance_hz = 3000.0
 # 125.9-126.25 МГц — известная гребёнка паразитных отражений децимационного
 # фильтра HackRF на низком sample_rate_hz (см. диагностику: воспроизводится
 # в сырых IQ до всякой нашей обработки и независимо в SDR++ при той же полосе).
+# EN: Frequency ranges fully excluded from detection (bins inside them never
+# EN: participate in cluster formation at all, at either the open or close
+# EN: threshold). 125.9-126.25 MHz is a known comb of spurious decimation-
+# EN: filter reflections from the HackRF at a low sample_rate_hz (confirmed
+# EN: by diagnostics: it reproduces in the raw IQ before any of our
+# EN: processing, and independently in SDR++ at the same bandwidth).
 [[detection.blacklisted_ranges]]
 start_hz = 125_900_000
 end_hz = 126_250_000
@@ -166,17 +276,25 @@ end_hz = 126_250_000
 # Тестовый диапазон — гасит короткие (<1с, ниже min_recording_duration_s)
 # срабатывания детектора вокруг 447.49 МГц, замеченные при headless-прогоне
 # app.py на 446.6 МГц (RTL-SDR).
+# EN: Test range — suppresses short (<1s, below min_recording_duration_s)
+# EN: detector triggers around 447.49 MHz, observed during a headless run of
+# EN: app.py at 446.6 MHz (RTL-SDR).
 [[detection.blacklisted_ranges]]
 start_hz = 447_300_000
 end_hz = 447_700_000
 
 [display]
 # Как часто перерисовывать таблицы GUI, секунды. Чаще человеку не нужно.
+# EN: How often to redraw the GUI tables, seconds. No need for a human to see
+# EN: it more often than this.
 refresh_interval_s = 0.5
 
 # Как часто вычерпывать очередь IQBlock из IQStreamReader внутри event loop
 # tkinter, секунды. Должно быть заметно чаще refresh_interval_s, иначе очередь
 # успеет переполниться между опросами.
+# EN: How often to drain the IQBlock queue from IQStreamReader inside the
+# EN: tkinter event loop, seconds. Must be noticeably more frequent than
+# EN: refresh_interval_s, otherwise the queue can overflow between polls.
 queue_pump_interval_s = 0.05
 
 # Максимум IQBlock-ов, обрабатываемых за один вызов _pump(). Tk однопоточен —
@@ -187,53 +305,91 @@ queue_pump_interval_s = 0.05
 # на всё время записи (реально наблюдалось на живом приёме). 4 — при
 # худшем случае ~70мс/блок даёт максимум ~280мс блокировки за тик вместо
 # неограниченной.
+# EN: Maximum number of IQBlocks processed per call to _pump(). Tk is
+# EN: single-threaded — until _pump() returns control, the window won't
+# EN: redraw or respond to any button. While a recording is active,
+# EN: processing one block is noticeably more expensive (channel
+# EN: demodulation) — without this limit, a backed-up queue could take
+# EN: arbitrarily long to drain, up to the window freezing solid for the
+# EN: entire recording (actually observed on live reception). 4 — in the
+# EN: worst case ~70ms/block gives a maximum of ~280ms of blocking per tick
+# EN: instead of unbounded.
 max_blocks_per_pump_tick = 4
 
 # Сколько последних завершённых передач хранить и показывать в истории.
+# EN: How many of the most recent finished transmissions to keep and show in
+# EN: the history.
 history_size = 20
 
 # Запас по оси Y (дБ) при автомасштабировании графика спектра сверх
 # фактического диапазона значений (без учёта обнулённых DC-notch бинов —
 # иначе выброс до уровня _POWER_FLOOR на DC растягивал бы шкалу и прятал
 # реальный размах сигнала/шума).
+# EN: Y-axis margin (dB) added on top of the actual value range when
+# EN: autoscaling the spectrum plot (excluding zeroed-out DC-notch bins —
+# EN: otherwise the drop to _POWER_FLOOR at DC would stretch the scale and
+# EN: hide the real signal/noise dynamic range).
 spectrum_y_margin_db = 5.0
 
 [audio]
 # ФНЧ после переноса канала на 0 Гц (ChannelExtractor, ступень 1 децимации).
 # Половина ширины канала — авиаканалы AM обычно укладываются в несколько кГц.
+# EN: Low-pass filter after mixing the channel down to 0 Hz (ChannelExtractor,
+# EN: decimation stage 1). Channel half-bandwidth — AM aviation channels
+# EN: typically fit within a few kHz.
 channel_half_bandwidth_hz = 8000.0
 
 # Выходная частота ступени 1: sample_rate_hz / channel_intermediate_sample_rate_hz
 # должно делиться нацело (2_000_000 / 80_000 = 25). Даёт большой запас по
 # переходной полосе фильтра относительно частоты Найквиста (40 кГц против 8 кГц среза).
+# EN: Stage 1 output rate: sample_rate_hz / channel_intermediate_sample_rate_hz
+# EN: must divide evenly (2_000_000 / 80_000 = 25). Gives a large margin for
+# EN: the filter's transition band relative to the Nyquist frequency
+# EN: (40 kHz vs. an 8 kHz cutoff).
 channel_intermediate_sample_rate_hz = 80_000
 
 # Число отводов FIR-фильтра ступени 1 (ChannelExtractor).
+# EN: Number of taps in the stage-1 FIR filter (ChannelExtractor).
 channel_filter_taps = 127
 
 # Режим демодуляции: "am" (огибающая) или "fm" (квадратурный дискриминатор).
 # "fm" — тестовый режим для 155.1/155.4 МГц (типичный land-mobile/бизнес-
 # диапазон с узкополосной ЧМ).
+# EN: Demodulation mode: "am" (envelope) or "fm" (quadrature discriminator).
+# EN: "fm" is a test mode for 155.1/155.4 MHz (a typical land-mobile/business
+# EN: band with narrowband FM).
 modulation_type = "fm"
 
 # Паспортная девиация FM-канала, Гц — используется только при modulation_type
 # = "fm" (нормирует выход дискриминатора: полная девиация -> амплитуда ~1.0).
 # 5000 Гц — стандартная девиация NFM для каналов с шагом 12.5/25 кГц.
+# EN: Rated FM channel deviation, Hz — used only when modulation_type = "fm"
+# EN: (normalizes the discriminator output: full deviation -> amplitude ~1.0).
+# EN: 5000 Hz is the standard NFM deviation for 12.5/25 kHz channel spacing.
 fm_deviation_hz = 5000.0
 
 # Полосовой аудиофильтр после демодуляции — убирает DC-смещение несущей
 # И отсекает шум выше речевого диапазона одним фильтром (300-3400 Гц —
 # стандартная телефонная голосовая полоса, покрывает авиаречь).
+# EN: Bandpass audio filter after demodulation — removes the carrier's DC
+# EN: offset AND cuts noise above the voice range with a single filter
+# EN: (300-3400 Hz — the standard telephone voice band, covers aviation
+# EN: speech).
 voice_band_low_hz = 300.0
 voice_band_high_hz = 3400.0
 voice_filter_order = 4
 
 # Итоговая частота дискретизации WAV-записи. channel_intermediate_sample_rate_hz /
 # audio_sample_rate_hz тоже должно делиться нацело (80_000 / 16_000 = 5).
+# EN: Final WAV recording sample rate. channel_intermediate_sample_rate_hz /
+# EN: audio_sample_rate_hz must also divide evenly (80_000 / 16_000 = 5).
 audio_sample_rate_hz = 16_000
 
 # ФНЧ ступени 2 децимации (AudioResampler) — должен быть меньше половины
 # audio_sample_rate_hz (частоты Найквиста итоговой записи), иначе алиасинг.
+# EN: Low-pass filter for decimation stage 2 (AudioResampler) — must be less
+# EN: than half of audio_sample_rate_hz (the final recording's Nyquist
+# EN: frequency), otherwise aliasing occurs.
 audio_resample_cutoff_hz = 7000.0
 audio_resample_filter_taps = 127
 
@@ -242,10 +398,19 @@ audio_resample_filter_taps = 127
 # демодуляции, реально используется только то, что совпадает с
 # modulation_type (см. AudioConfig.pcm_full_scale_input). Переключение
 # modulation_type не требует держать оба значения синхронными.
+# EN: How much to multiply the demodulated signal by before writing it as
+# EN: PCM16 (the value corresponding to int16 full scale) — one value per
+# EN: demodulation mode; only the one matching modulation_type is actually
+# EN: used (see AudioConfig.pcm_full_scale_input). Switching modulation_type
+# EN: doesn't require keeping both values in sync.
 
 # AM: огибающая (np.abs) обычно даёт малые линейные значения (~0.001-0.05 по
 # наблюдениям на реальном приёме 126.9 МГц). Подобрано ориентировочно —
 # после первой тестовой записи может понадобиться подстройка по громкости.
+# EN: AM: the envelope (np.abs) typically produces small linear values
+# EN: (~0.001-0.05, based on observations at 126.9 MHz on real hardware).
+# EN: Chosen approximately — may need a loudness adjustment after the first
+# EN: test recording.
 am_pcm_full_scale_input = 0.05
 
 # FM: дискриминатор нормирован так, что полная девиация (fm_deviation_hz)
@@ -255,9 +420,19 @@ am_pcm_full_scale_input = 0.05
 # теоретической единице. 1.1 даёт ~10% запаса сверху, чтобы пики громкой
 # речи на полной девиации не клиппировались — как и AM, подлежит уточнению
 # по факту первой записи реального сигнала.
+# EN: FM: the discriminator is normalized so full deviation (fm_deviation_hz)
+# EN: gives an amplitude of ~1.0 — measured by running a synthetic full-
+# EN: deviation tone (1 kHz) through the real pipeline (ChannelExtractor ->
+# EN: FmDemodulator -> AudioFilter -> AudioResampler): the peak after
+# EN: filtering was ~0.99, right up against the theoretical value of one.
+# EN: 1.1 gives ~10% headroom so loud-speech peaks at full deviation don't
+# EN: clip — like AM, subject to refinement once a real signal is first
+# EN: recorded.
 fm_pcm_full_scale_input = 1.1
 
 # Каталог для WAV-файлов (относительно рабочей директории запуска).
+# EN: Directory for WAV files (relative to the working directory the app is
+# EN: started from).
 recordings_dir = "recordings"
 
 # Минимальная длительность передачи, при которой она вообще пишется на диск.
@@ -266,18 +441,32 @@ recordings_dir = "recordings"
 # записи. Реальная речь (позывной и т.п.) короче секунды не бывает — это
 # фильтрует короткие шумовые всплески, которые раньше давали кучу мусорных
 # WAV-файлов < 1с.
+# EN: Minimum transmission duration for it to be written to disk at all.
+# EN: Audio is buffered in memory from the moment the track is confirmed; the
+# EN: file is only opened once the buffer reaches this duration. Anything
+# EN: shorter is discarded without ever being written. Real speech (a call
+# EN: sign, etc.) is never shorter than a second — this filters out the short
+# EN: noise blips that used to produce a pile of junk WAV files < 1s.
 min_recording_duration_s = 1.0
 
 # Сколько ещё писать после закрытия детектором (естественный хвост
 # передачи/угасание огибающей не обрезается резко на границе close_confirm_frames).
+# EN: How much extra to keep recording after the detector closes the track
+# EN: (the natural tail of the transmission / envelope decay isn't cut off
+# EN: sharply right at the close_confirm_frames boundary).
 post_roll_duration_s = 0.5
 
 [acquisition]
 # Максимальное число IQ-блоков в очереди между callback-потоком приёма и потребителем.
 # При переполнении блоки отбрасываются (см. IQStreamReader), приём не блокируется.
+# EN: Maximum number of IQ blocks queued between the acquisition callback
+# EN: thread and the consumer. On overflow, blocks are dropped (see
+# EN: IQStreamReader) — acquisition itself never blocks.
 queue_max_blocks = 64
 
 # Периодичность вывода статистики потока (принято блоков, throughput, дропы), секунды.
+# EN: How often to log stream statistics (blocks received, throughput,
+# EN: drops), seconds.
 stats_log_interval_s = 5.0
 
 [logging]

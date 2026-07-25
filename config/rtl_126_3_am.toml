@@ -1,17 +1,28 @@
 # Именованный профиль: RTL-SDR, авиадиапазон 126.3 МГц, AM.
 # Запуск: python -m sdr_monitor.app --config config/rtl_126_3_am.toml
 # Все параметры радиотракта и захвата задаются здесь, никаких магических чисел в коде быть не должно.
+# EN: Named profile: RTL-SDR, aviation band 126.3 MHz, AM.
+# EN: Run: python -m sdr_monitor.app --config config/rtl_126_3_am.toml
+# EN: Every radio-path and acquisition parameter is set here — there must be
+# EN: no magic numbers in the code.
 
 [sdr]
 # Какой физический приёмник использовать: "hackrf" или "rtlsdr". Определяет,
 # какая из секций [radio.*] ниже парсится и валидируется — вторая секция,
 # если присутствует, просто не используется, её не нужно удалять/комментировать
 # при переключении.
+# EN: Which physical receiver to use: "hackrf" or "rtlsdr". Determines which
+# EN: [radio.*] section below is parsed and validated — the other section, if
+# EN: present, is simply unused and doesn't need to be deleted/commented out
+# EN: when switching.
 type = "rtlsdr"
 
 [radio.hackrf]
 # Неактивная секция (sdr.type = "rtlsdr") — оставлена на случай переключения
 # железа без пересборки файла. Значения не подобраны под этот профиль.
+# EN: Inactive section (sdr.type = "rtlsdr") — kept in case the hardware is
+# EN: switched without rebuilding the file. Values are not tuned for this
+# EN: profile.
 center_frequency_hz = 123_600_000
 
 
@@ -27,17 +38,29 @@ settle_time_s = 5.0
 # что и у остальных профилей в проекте: избегаем DC-артефакта тюнера (R820T
 # даёт паразитный пик LO-leakage ровно на центральной частоте, гасится
 # dc_notch_bins из [fft], но лучше вообще увести от него целевой сигнал).
+# EN: Tuning frequency, Hz. Target signal is 126.3 MHz (aviation band), tuned
+# EN: 300 kHz below it (126.0 MHz) — the same principle used across other
+# EN: profiles in this project: avoiding the tuner's DC artifact (the R820T
+# EN: produces a spurious LO-leakage peak exactly at the center frequency,
+# EN: suppressed by dc_notch_bins from [fft], but it's better to keep the
+# EN: target signal away from it entirely).
 center_frequency_hz = 126_300_000
 
 
 # Частота дискретизации RTL2832U, Гц. 2.0 МГц — стандартное значение,
 # проверенное на реальном железе; обязательное условие: делится нацело на
 # channel_intermediate_sample_rate_hz из [audio] (80 кГц).
+# EN: RTL2832U sample rate, Hz. 2.0 MHz is a standard, hardware-proven value;
+# EN: mandatory condition: it must divide evenly by
+# EN: channel_intermediate_sample_rate_hz from [audio] (80 kHz).
 sample_rate_hz = 2_000_000
 
 # Усиление тюнера R820T, дБ. Используется, только если agc_enabled=false.
 # 40.2 дБ — проверенное на реальном приёме значение из других профилей
 # (близко к максимуму списка, который сообщает конкретный экземпляр тюнера).
+# EN: R820T tuner gain, dB. Used only if agc_enabled=false. 40.2 dB is a
+# EN: value proven on real reception in other profiles (close to the top of
+# EN: the list a given tuner instance reports).
 gain_db = 40.2
 
 agc_enabled = false
@@ -70,6 +93,11 @@ frequency_match_tolerance_hz = 3000.0
 # выявлено. Добавляются через GUI-редактор конфига (кнопка "Config..." или
 # python -m sdr_monitor.config_editor --config config/rtl_126_3_am.toml)
 # по факту наблюдения ложных срабатываний на реальном приёме.
+# EN: Empty for now — no profile-specific spurious ranges have been
+# EN: identified yet. Add them via the GUI config editor (the "Config..."
+# EN: button, or python -m sdr_monitor.config_editor --config
+# EN: config/rtl_126_3_am.toml) as false triggers are observed on real
+# EN: reception.
 
 [display]
 refresh_interval_s = 0.5
@@ -85,10 +113,15 @@ channel_filter_taps = 127
 
 # Режим демодуляции для этого профиля — AM (огибающая), как у большинства
 # авиаканалов.
+# EN: Demodulation mode for this profile is AM (envelope), as used by most
+# EN: aviation channels.
 modulation_type = "am"
 
 # Используется только при modulation_type = "fm" — для этого профиля неактивно,
 # но поле обязано пройти валидацию AudioConfig, значение оставлено дефолтным.
+# EN: Used only when modulation_type = "fm" — inactive for this profile, but
+# EN: the field must still pass AudioConfig validation, so it's left at its
+# EN: default value.
 fm_deviation_hz = 5000.0
 
 voice_band_low_hz = 300.0
@@ -102,10 +135,16 @@ audio_resample_filter_taps = 127
 # AM: огибающая (np.abs) обычно даёт малые линейные значения (~0.001-0.05 по
 # наблюдениям на реальном приёме в других профилях). Подобрано ориентировочно —
 # после первой тестовой записи на 126.3 МГц может понадобиться подстройка.
+# EN: AM: the envelope (np.abs) typically produces small linear values
+# EN: (~0.001-0.05, based on observations on real reception in other
+# EN: profiles). Chosen approximately — may need adjustment after the first
+# EN: test recording at 126.3 MHz.
 am_pcm_full_scale_input = 0.05
 
 # Неактивно при modulation_type = "am" — оставлено дефолтным (см. комментарий
 # у fm_deviation_hz).
+# EN: Inactive when modulation_type = "am" — left at its default (see the
+# EN: comment on fm_deviation_hz).
 fm_pcm_full_scale_input = 1.1
 
 recordings_dir = "recordings"
